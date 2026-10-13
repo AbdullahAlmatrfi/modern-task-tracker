@@ -20,6 +20,8 @@ const WEEK_STARTS: { value: WeekStart; label: string }[] = [
 
 export function Account({ auth, sync, prefs, onPrefs, onExport, onImport }: Props) {
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [creating, setCreating] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [importMsg, setImportMsg] = useState<string | null>(null);
@@ -27,11 +29,12 @@ export function Account({ auth, sync, prefs, onPrefs, onExport, onImport }: Prop
 
   async function send(e: FormEvent) {
     e.preventDefault();
-    if (!email.trim()) return;
+    if (!email.trim() || !password) return;
     setSending(true);
-    const err = await auth.signIn(email.trim());
+    const err = creating ? await auth.signUp(email.trim(), password) : await auth.signIn(email.trim(), password);
     setSending(false);
-    setMessage(err ?? 'Check your email for the sign-in link.');
+    setMessage(err);
+    if (!err) setPassword('');
   }
 
   async function pick(files: FileList | null) {
@@ -69,7 +72,7 @@ export function Account({ auth, sync, prefs, onPrefs, onExport, onImport }: Prop
         )}
 
         {auth.enabled && !auth.user && (
-          <form onSubmit={send} className="row2">
+          <form onSubmit={send} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <label className="sr" htmlFor="email">
               Email
             </label>
@@ -78,12 +81,37 @@ export function Account({ auth, sync, prefs, onPrefs, onExport, onImport }: Prop
               className="hq"
               type="email"
               required
+              autoComplete="email"
               placeholder="you@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
+            <label className="sr" htmlFor="password">
+              Password
+            </label>
+            <input
+              id="password"
+              className="hq"
+              type="password"
+              required
+              minLength={6}
+              autoComplete={creating ? 'new-password' : 'current-password'}
+              placeholder="Password (6+ characters)"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
             <button type="submit" className="btn solid" disabled={sending}>
-              {sending ? '...' : 'Sign in'}
+              {sending ? '...' : creating ? 'Create account' : 'Sign in'}
+            </button>
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={() => {
+                setCreating((c) => !c);
+                setMessage(null);
+              }}
+            >
+              {creating ? 'I already have an account' : 'Create an account'}
             </button>
           </form>
         )}

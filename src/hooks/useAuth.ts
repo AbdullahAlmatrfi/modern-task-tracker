@@ -8,7 +8,8 @@ export interface Auth {
   /** False when no Supabase keys are configured. */
   enabled: boolean;
   user: User | null;
-  signIn: (email: string) => Promise<string | null>;
+  signIn: (email: string, password: string) => Promise<string | null>;
+  signUp: (email: string, password: string) => Promise<string | null>;
   signOut: () => Promise<void>;
 }
 
@@ -41,19 +42,26 @@ export function useAuth(): Auth {
     };
   }, []);
 
-  /** Sends a magic link. Returns an error message, or null on success. */
-  const signIn = useCallback(async (email: string) => {
+  /** Signs in with email and password. Returns an error message, or null on success. */
+  const signIn = useCallback(async (email: string, password: string) => {
     if (!supabase) return 'Sign-in is not set up.';
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: window.location.origin },
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     return error ? error.message : null;
+  }, []);
+
+  /** Creates an account. Returns an error message, or null on success. */
+  const signUp = useCallback(async (email: string, password: string) => {
+    if (!supabase) return 'Sign-in is not set up.';
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) return error.message;
+    // No session means the project still asks people to confirm their email first.
+    if (!data.session) return 'Account created. Confirm your email, then sign in.';
+    return null;
   }, []);
 
   const signOut = useCallback(async () => {
     if (supabase) await supabase.auth.signOut();
   }, []);
 
-  return { loading: state.loading, enabled: supabase !== null, user: state.user, signIn, signOut };
+  return { loading: state.loading, enabled: supabase !== null, user: state.user, signIn, signUp, signOut };
 }

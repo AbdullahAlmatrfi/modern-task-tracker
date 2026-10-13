@@ -25,7 +25,8 @@ Without any setup, everything saves in your browser (localStorage).
    VITE_SUPABASE_URL=...
    VITE_SUPABASE_ANON_KEY=...
    ```
-6. Restart `npm run dev`. An account box appears in the sidebar; sign in with an email magic link.
+6. Restart `npm run dev`. An account box appears in the sidebar; create an account with email and password.
+   In Supabase: Authentication → Sign In / Providers → Email → turn off "Confirm email" so sign-up sends no email (the free built-in email is limited to a few per hour).
 
 Tasks and goals made before signing in move into your account on first sign-in.
 
