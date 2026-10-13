@@ -8,7 +8,7 @@ import { addDays, todayKey, weekStartOf } from '../lib/dates';
 import { createTask } from '../lib/task';
 import { topLanes } from '../lib/lanes';
 import { burst } from '../lib/confetti';
-import { carryOver, groupByDay, sortActive, streak } from '../lib/stats';
+import { groupByDay, sortActive, streak, visibleOn } from '../lib/stats';
 import { createGoal } from '../lib/goals';
 import { useNow } from '../hooks/useNow';
 import { usePrefs } from '../hooks/usePrefs';
@@ -20,7 +20,6 @@ import { Week } from './Week';
 import { Lanes } from './Lanes';
 import { Composer, type AddFields } from './Composer';
 import { Goals, type GoalFields } from './Goals';
-import { CarryBanner } from './CarryBanner';
 import { TaskList } from './TaskList';
 import { History } from './History';
 import { FocusPill, type FocusSession } from './FocusPill';
@@ -102,11 +101,10 @@ export function Workspace({ auth }: { auth: Auth }) {
   const tasks = useMemo(() => Object.values(data.tasks), [data.tasks]);
   const goals = useMemo(() => Object.values(data.goals), [data.goals]);
   const byDay = useMemo(() => groupByDay(tasks), [tasks]);
-  const dayTasks = byDay[sel] ?? [];
+  const dayTasks = useMemo(() => visibleOn(tasks, sel, today), [tasks, sel, today]);
   const lanes = useMemo(() => topLanes(tasks), [tasks]);
   const doneCount = useMemo(() => tasks.filter((t) => t.done).length, [tasks]);
   const streakNow = streak(byDay, today);
-  const carry = useMemo(() => carryOver(tasks, today), [tasks, today]);
 
   const add = useCallback(
     (f: AddFields) => {
@@ -150,6 +148,10 @@ export function Workspace({ auth }: { auth: Auth }) {
     [show],
   );
 
+  const move = useCallback((id: string, position: number) => {
+    dispatch({ type: 'update', id, patch: { position }, at: Date.now() });
+  }, []);
+
   const startFocus = useCallback(
     (task: Task) => {
       const total = prefs.focusMinutes * 60_000;
@@ -165,10 +167,6 @@ export function Workspace({ auth }: { auth: Auth }) {
     }
     setSession(null);
   }, [session, data.tasks]);
-
-  const bringCarry = useCallback(() => {
-    dispatch({ type: 'carry', ids: carry.map((t) => t.id), day: today, at: Date.now() });
-  }, [carry, today]);
 
   const addGoal = useCallback(
     (f: GoalFields) => {
@@ -295,7 +293,6 @@ export function Workspace({ auth }: { auth: Auth }) {
           {view === 'plan' ? (
             <div className="view">
               <Composer inputRef={inputRef} lanes={lanes} onAdd={add} />
-              {sel === today && <CarryBanner count={carry.length} onBring={bringCarry} />}
               <TaskList
                 day={sel}
                 tasks={dayTasks}
@@ -305,6 +302,7 @@ export function Workspace({ auth }: { auth: Auth }) {
                 onSave={save}
                 onDelete={remove}
                 onFocus={startFocus}
+                onMove={move}
               />
               <Goals
                 goals={goals}

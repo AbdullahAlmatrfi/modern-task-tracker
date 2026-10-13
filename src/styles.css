@@ -40,7 +40,12 @@ button{font:inherit;color:inherit;cursor:pointer}
 .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 .boot{min-height:60vh}
 
-.app{max-width:1120px;margin-inline:auto;display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:clamp(28px,5vw,72px);align-items:start}
+.app{max-width:1400px;margin-inline:auto;display:grid;grid-template-columns:minmax(0,280px) minmax(0,660px) minmax(0,280px);justify-content:center;gap:clamp(28px,4vw,64px);align-items:start}
+@media (max-width:1180px){.app{grid-template-columns:minmax(0,300px) minmax(0,1fr);justify-content:stretch}}
+/* the side panel stays quiet until you look at it */
+.rail{opacity:.55;transition:opacity .25s}
+.rail:hover,.rail:focus-within{opacity:1}
+@media (max-width:880px){.rail{opacity:1}}
 .rail,.col{min-width:0;display:flex;flex-direction:column;gap:26px}
 .rail>*,.col>*{animation:rise .55s cubic-bezier(.2,.8,.2,1) both}
 .rail>:nth-child(2){animation-delay:.05s}.rail>:nth-child(3){animation-delay:.1s}.rail>:nth-child(4){animation-delay:.15s}
@@ -57,14 +62,14 @@ h1{margin:4px 0 0;font:700 clamp(48px,9vw,68px)/.95 var(--f-display);letter-spac
 .streak b{font-weight:500;color:var(--t3)}
 
 /* ring */
-.ringwrap{position:relative;width:100%;max-width:280px;aspect-ratio:1}
+.ringwrap{position:relative;width:100%;max-width:200px;aspect-ratio:1}
 #ring{width:100%;height:100%;display:block;overflow:visible}
 #ring .trk{opacity:.2;fill:none;stroke-linecap:round}
 #ring .fill{fill:none;stroke-linecap:round;transition:stroke-dasharray .7s cubic-bezier(.3,.9,.3,1),opacity .3s}
 .ringwrap.complete #ring{animation:glow 1.4s ease-out 1}
 @keyframes glow{0%{filter:drop-shadow(0 0 0 transparent)}35%{filter:drop-shadow(0 0 14px color-mix(in srgb,var(--accent) 70%,transparent))}100%{filter:drop-shadow(0 0 0 transparent)}}
 .ringc{position:absolute;inset:0;display:grid;place-content:center;text-align:center;pointer-events:none}
-.big{font:700 clamp(64px,12vw,88px)/1 var(--f-display);letter-spacing:-.05em;font-variant-numeric:tabular-nums}
+.big{font:700 clamp(44px,5vw,60px)/1 var(--f-display);letter-spacing:-.05em;font-variant-numeric:tabular-nums}
 .lbl{margin-top:4px;font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .sub{margin:-6px 0 0;color:var(--muted);font-size:15px}
 
@@ -226,6 +231,20 @@ kbd{font:500 11px var(--f-mono);padding:1px 6px;border-radius:6px;border:1px sol
 .row.new{animation:rowin .5s cubic-bezier(.2,.9,.3,1)}
 @keyframes rowin{from{opacity:0;transform:translateY(-10px);background:color-mix(in srgb,var(--c) 14%,transparent)}}
 .row.leaving{opacity:0;transform:translateX(18px)}
+.row{position:relative}
+.grip{position:absolute;left:-24px;top:16px;width:22px;height:26px;display:grid;place-items:center;padding:0;border:0;border-radius:6px;background:transparent;color:var(--faint);opacity:0;cursor:grab;touch-action:none;transition:opacity .2s}
+.row:hover .grip,.row:focus-within .grip,.grip:focus-visible{opacity:.75}
+.grip:active{cursor:grabbing}
+@media (hover:none){.grip{opacity:.5}}
+.from{font:500 12px var(--f-mono);color:var(--faint)}
+.rows.dragging{user-select:none;-webkit-user-select:none}
+.rows.dragging .row.shift{transition:transform .22s cubic-bezier(.2,.8,.2,1)}
+.rows.dragging .row.lift,.rows.dragging .row.settle{z-index:5;background:var(--surface);box-shadow:var(--shadow);border-radius:14px;border-bottom-color:transparent}
+.rows.dragging .row.lift{transition:none;scale:1.02;cursor:grabbing}
+.rows.dragging .row.settle{transition:transform .2s cubic-bezier(.2,.8,.2,1),scale .2s;scale:1}
+.rows.dragging .row.lift .grip,.rows.dragging .row.settle .grip{opacity:1}
+.rows.still .row{transition:none}
+@media (max-width:640px){.grip{left:-18px}}
 .chk{flex:none;width:26px;height:26px;margin-top:1px;border-radius:50%;border:2px solid var(--c);background:transparent;color:var(--bg);display:grid;place-items:center;padding:0;transition:background .25s,transform .2s}
 .chk:hover{transform:scale(1.1)}
 .chk:active{transform:scale(.9)}

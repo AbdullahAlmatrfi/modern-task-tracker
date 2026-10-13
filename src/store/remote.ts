@@ -12,6 +12,7 @@ interface TaskRow {
   priority: boolean;
   done: boolean;
   done_at: string | null;
+  position?: number | null;
   created_at: string;
   updated_at: string;
   deleted: boolean;
@@ -46,6 +47,8 @@ const taskToRow = (t: Task, userId: string): TaskRow => ({
   priority: t.priority,
   done: t.done,
   done_at: t.doneAt === null ? null : iso(t.doneAt),
+  // only sent once a task has been dragged, so syncing keeps working before the column exists
+  ...(t.position === undefined ? {} : { position: t.position }),
   created_at: iso(t.createdAt),
   updated_at: iso(t.updatedAt),
   deleted: false,
@@ -61,6 +64,7 @@ const taskFromRow = (r: TaskRow): Task => ({
   priority: r.priority,
   done: r.done,
   doneAt: r.done_at ? Date.parse(r.done_at) : null,
+  ...(typeof r.position === 'number' ? { position: r.position } : {}),
   createdAt: Date.parse(r.created_at),
   updatedAt: Date.parse(r.updated_at),
 });

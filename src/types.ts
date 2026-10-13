@@ -14,6 +14,8 @@ export interface Task {
   done: boolean;
   /** Epoch ms when it was checked off, or null. */
   doneAt: number | null;
+  /** Manual order within a list (smaller is higher). Falls back to createdAt when unset. */
+  position?: number;
   createdAt: number;
   updatedAt: number;
 }

@@ -1,6 +1,6 @@
 import type { Data, DayKey, Goal, Pending, Task } from '../types';
 
-export type TaskPatch = Partial<Pick<Task, 'title' | 'description' | 'time' | 'lane' | 'priority'>>;
+export type TaskPatch = Partial<Pick<Task, 'title' | 'description' | 'time' | 'lane' | 'priority' | 'position'>>;
 export type GoalPatch = Partial<Pick<Goal, 'title' | 'target' | 'lane'>>;
 
 type SyncedItem = { id: string; updatedAt: number; deleted: boolean };

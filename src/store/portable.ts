@@ -43,6 +43,7 @@ function cleanTask(x: unknown): Task | null {
     priority: o.priority === true,
     done,
     doneAt: done ? num(o.doneAt, now) : null,
+    ...(typeof o.position === 'number' && Number.isFinite(o.position) ? { position: o.position } : {}),
     createdAt: num(o.createdAt, now),
     updatedAt: now,
   };

@@ -12,10 +12,14 @@ create table if not exists public.tasks (
   priority    boolean not null default false,
   done        boolean not null default false,
   done_at     timestamptz,
+  position    double precision,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now(),
   deleted     boolean not null default false
 );
+
+-- for projects created before drag-to-reorder existed
+alter table public.tasks add column if not exists position double precision;
 
 create index if not exists tasks_user_day_idx     on public.tasks (user_id, day);
 create index if not exists tasks_user_updated_idx on public.tasks (user_id, updated_at);

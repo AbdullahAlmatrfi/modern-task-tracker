@@ -1,5 +1,5 @@
 import type { DayKey, Task } from '../types';
-import { addDays, fmtMinutes, fromKey, todayKey } from './dates';
+import { addDays, fmtMinutes, fromKey, toKey, todayKey } from './dates';
 
 export function groupByDay(tasks: Task[]): Record<DayKey, Task[]> {
   const out: Record<DayKey, Task[]> = {};
@@ -15,6 +15,19 @@ export function sortActive(tasks: Task[]): Task[] {
     if (ta !== tb) return ta < tb ? -1 : 1;
     if (a.priority !== b.priority) return a.priority ? -1 : 1;
     return a.createdAt - b.createdAt;
+  });
+}
+
+/**
+ * What belongs on the list for `day`. Today also shows every unfinished task left over
+ * from earlier days, so nothing slips away: it stays until it is checked or deleted.
+ * A leftover task you finish today stays in today's Done list.
+ */
+export function visibleOn(tasks: Task[], day: DayKey, today: DayKey): Task[] {
+  return tasks.filter((t) => {
+    if (t.day === day) return true;
+    if (day !== today || t.day > today) return false;
+    return !t.done || (t.doneAt !== null && toKey(new Date(t.doneAt)) === today);
   });
 }
 

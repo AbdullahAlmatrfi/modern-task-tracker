@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { addDays, diffDays, weekDays, weekStartOf } from './dates';
 import { parseQuickAdd } from './parse';
-import { carryOver, completed, groupByDay, lastNDaysCounts, sortActive, streak, timeInfo } from './stats';
+import { carryOver, completed, groupByDay, lastNDaysCounts, sortActive, streak, timeInfo, visibleOn } from './stats';
+import { positionAt, sortManual } from './order';
 import { createTask } from './task';
 import type { Task } from '../types';
 
@@ -101,5 +102,53 @@ describe('stats', () => {
     expect(timeInfo(mk(today, { time: '18:00' }), now)).toBeNull();
     expect(timeInfo(mk('2026-10-12', { time: '09:00' }), now)).toEqual({ label: 'missed', tone: 'late' });
     expect(timeInfo(mk(today, { time: '11:30', done: true }), now)).toBeNull();
+  });
+});
+
+describe('manual order', () => {
+  const t = (id: string, createdAt: number, position?: number) =>
+    ({ ...createTask('2026-10-13', { title: id }, createdAt), id, ...(position === undefined ? {} : { position }) });
+
+  it('orders by position, falling back to when the task was added', () => {
+    const list = [t('c', 30), t('a', 10), t('b', 20, 5)];
+    expect(sortManual(list).map((x) => x.id)).toEqual(['b', 'a', 'c']);
+  });
+
+  it('puts a task first, last or between neighbours', () => {
+    const others = [t('a', 100), t('b', 200), t('c', 300)];
+    expect(positionAt(others, 0)).toBeLessThan(100);
+    expect(positionAt(others, 3)).toBeGreaterThan(300);
+    expect(positionAt(others, 1)).toBe(150);
+  });
+
+  it('moving the last task to the top puts it first', () => {
+    const list = [t('a', 100), t('b', 200), t('c', 300)];
+    const others = list.slice(0, 2);
+    const moved = { ...list[2], position: positionAt(others, 0) };
+    expect(sortManual([...others, moved]).map((x) => x.id)).toEqual(['c', 'a', 'b']);
+  });
+});
+
+describe('visibleOn', () => {
+  const today = '2026-10-13';
+  const mk2 = (day: string, extra: Partial<Task> = {}): Task => ({ ...createTask(day, { title: day }, 1), ...extra });
+
+  it('keeps unfinished tasks from any earlier day on today, however old', () => {
+    const old = mk2('2026-08-01');
+    const todayTask = mk2(today);
+    const future = mk2('2026-10-20');
+    expect(visibleOn([old, todayTask, future], today, today)).toEqual([old, todayTask]);
+  });
+
+  it('keeps a leftover task you finished today, but not one finished earlier', () => {
+    const doneToday = mk2('2026-10-01', { done: true, doneAt: new Date(2026, 9, 13, 9).getTime() });
+    const doneBefore = mk2('2026-10-01', { done: true, doneAt: new Date(2026, 9, 5, 9).getTime() });
+    expect(visibleOn([doneToday, doneBefore], today, today)).toEqual([doneToday]);
+  });
+
+  it('does not roll tasks onto other days', () => {
+    const old = mk2('2026-10-01');
+    expect(visibleOn([old], '2026-10-05', today)).toEqual([]);
+    expect(visibleOn([old], '2026-10-01', today)).toEqual([old]);
   });
 });

@@ -1,11 +1,12 @@
-import { useRef, useState, type CSSProperties } from 'react';
+import { useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
 import type { Task } from '../types';
 import type { TaskPatch } from '../store/reducer';
 import { parseQuickAdd } from '../lib/parse';
 import { laneColor } from '../lib/lanes';
 import { timeInfo } from '../lib/stats';
 import { reducedMotion } from '../lib/motion';
-import { CheckIcon, PlayIcon, TrashIcon } from './icons';
+import { fromKey } from '../lib/dates';
+import { CheckIcon, GripIcon, PlayIcon, TrashIcon } from './icons';
 
 interface Props {
   task: Task;
@@ -15,9 +16,15 @@ interface Props {
   onSave: (id: string, patch: TaskPatch) => void;
   onDelete: (task: Task) => void;
   onFocus: (task: Task) => void;
+  /** Day this task was planned for, when it is showing on a later day. */
+  from?: string | null;
+  /** Dragging: how this row is moving right now. */
+  drag?: { kind: 'lift' | 'settle' | 'shift'; y: number };
+  onGrab?: (e: ReactPointerEvent<HTMLButtonElement>) => void;
+  onNudge?: (dir: -1 | 1) => void;
 }
 
-export function TaskRow({ task, now, isNew, onToggle, onSave, onDelete, onFocus }: Props) {
+export function TaskRow({ task, now, isNew, onToggle, onSave, onDelete, onFocus, from, drag, onGrab, onNudge }: Props) {
   const [editing, setEditing] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -49,10 +56,33 @@ export function TaskRow({ task, now, isNew, onToggle, onSave, onDelete, onFocus 
     window.setTimeout(() => onDelete(task), 220);
   }
 
-  const cls = ['row', task.done ? 'done' : '', isNew ? 'new' : '', leaving ? 'leaving' : ''].filter(Boolean).join(' ');
+  const cls = ['row', task.done ? 'done' : '', isNew ? 'new' : '', leaving ? 'leaving' : '', drag ? drag.kind : '']
+    .filter(Boolean)
+    .join(' ');
+  const style = {
+    '--c': laneColor(task.lane),
+    ...(drag ? { transform: `translateY(${drag.y}px)` } : {}),
+  } as CSSProperties;
 
   return (
-    <li ref={rowRef} className={cls} style={{ '--c': laneColor(task.lane) } as CSSProperties}>
+    <li ref={rowRef} className={cls} style={style}>
+      {onGrab && !editing && (
+        <button
+          type="button"
+          className="grip"
+          aria-label={`Move: ${task.title}. Use the up and down arrow keys.`}
+          title="Drag to reorder"
+          onPointerDown={onGrab}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+              e.preventDefault();
+              onNudge?.(e.key === 'ArrowUp' ? -1 : 1);
+            }
+          }}
+        >
+          <GripIcon />
+        </button>
+      )}
       <button
         type="button"
         className="chk"
@@ -135,6 +165,9 @@ export function TaskRow({ task, now, isNew, onToggle, onSave, onDelete, onFocus 
                 </span>
               )}
               {task.priority && <span className="pri">high</span>}
+              {from && !task.done && (
+                <span className="from">from {fromKey(from).toLocaleDateString(undefined, { weekday: 'short' })} {fromKey(from).getDate()}</span>
+              )}
             </div>
           </>
         )}
