@@ -123,6 +123,7 @@ function GoalCard({
   onDelete: (goal: Goal) => void;
 }) {
   const ref = useRef<HTMLElement>(null);
+  const [open, setOpen] = useState(false);
   const p = goalProgress(goal, today);
   const stats = goalTaskStats(goal, tasks);
   const count = daysLeftText(p.left);
@@ -130,6 +131,24 @@ function GoalCard({
   const pct = Math.round(p.pct * 1000) / 10;
   const color = laneColor(goal.lane);
   const nowShift = p.pct < 0.14 ? '-10%' : p.pct > 0.86 ? '-90%' : '-50%';
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        className={`goalrow ${p.state}`}
+        style={{ '--c': color, '--p': `${pct}%` } as CSSProperties}
+        aria-label={`${goal.title}, ${count.big} ${count.small}. Open details`}
+        onClick={() => setOpen(true)}
+      >
+        <span className="grt">{goal.title}</span>
+        <span className="grbar" aria-hidden="true">
+          <i />
+        </span>
+        <span className="grc">{p.state === 'reached' ? 'reached' : `${count.big} ${count.small}`}</span>
+      </button>
+    );
+  }
 
   return (
     <article
@@ -195,6 +214,9 @@ function GoalCard({
           )}
         </div>
         <div className="gacts">
+          <button type="button" className="ib gless" onClick={() => setOpen(false)}>
+            Less
+          </button>
           <button
             type="button"
             className="ib"

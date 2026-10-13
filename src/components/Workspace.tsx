@@ -294,16 +294,6 @@ export function Workspace({ auth }: { auth: Auth }) {
 
           {view === 'plan' ? (
             <div className="view">
-              <Goals
-                goals={goals}
-                tasks={tasks}
-                today={today}
-                lanes={lanes}
-                onAdd={addGoal}
-                onUpdate={updateGoal}
-                onReach={reachGoal}
-                onDelete={removeGoal}
-              />
               <Composer inputRef={inputRef} lanes={lanes} onAdd={add} />
               {sel === today && <CarryBanner count={carry.length} onBring={bringCarry} />}
               <TaskList
@@ -315,6 +305,16 @@ export function Workspace({ auth }: { auth: Auth }) {
                 onSave={save}
                 onDelete={remove}
                 onFocus={startFocus}
+              />
+              <Goals
+                goals={goals}
+                tasks={tasks}
+                today={today}
+                lanes={lanes}
+                onAdd={addGoal}
+                onUpdate={updateGoal}
+                onReach={reachGoal}
+                onDelete={removeGoal}
               />
             </div>
           ) : (
