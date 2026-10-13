@@ -40,12 +40,21 @@ button{font:inherit;color:inherit;cursor:pointer}
 .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 .boot{min-height:60vh}
 
-.app{max-width:1400px;margin-inline:auto;display:grid;grid-template-columns:minmax(0,280px) minmax(0,660px) minmax(0,280px);justify-content:center;gap:clamp(28px,4vw,64px);align-items:start}
-@media (max-width:1180px){.app{grid-template-columns:minmax(0,300px) minmax(0,1fr);justify-content:stretch}}
-/* the side panel stays quiet until you look at it */
-.rail{opacity:.55;transition:opacity .25s}
-.rail:hover,.rail:focus-within{opacity:1}
-@media (max-width:880px){.rail{opacity:1}}
+.app{max-width:1500px;margin-inline:auto;display:grid;grid-template-columns:288px minmax(0,1fr) 320px;grid-template-areas:"rail col side";gap:clamp(28px,3.5vw,56px);align-items:start}
+.rail{grid-area:rail;position:sticky;top:28px;max-height:calc(100vh - 56px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding-right:6px}
+.col{grid-area:col;width:100%;max-width:760px;margin-inline:auto}
+.side{grid-area:side;position:sticky;top:28px;min-width:0}
+.side .goals{margin-top:0}
+/* narrower screens: goals drop under the tasks */
+@media (max-width:1280px){
+  .app{grid-template-columns:288px minmax(0,1fr);grid-template-areas:"rail col" "rail side"}
+  .col{max-width:none;margin-inline:0}
+  .side{position:static}
+}
+@media (min-width:1281px){
+  .side .goalrow{grid-template-columns:minmax(0,1fr) auto;row-gap:8px}
+  .side .goalrow .grbar{grid-row:2;grid-column:1/-1}
+}
 .rail,.col{min-width:0;display:flex;flex-direction:column;gap:26px}
 .rail>*,.col>*{animation:rise .55s cubic-bezier(.2,.8,.2,1) both}
 .rail>:nth-child(2){animation-delay:.05s}.rail>:nth-child(3){animation-delay:.1s}.rail>:nth-child(4){animation-delay:.15s}
@@ -223,6 +232,9 @@ kbd{font:500 11px var(--f-mono);padding:1px 6px;border-radius:6px;border:1px sol
 
 /* list */
 #list,#hlist{min-width:0}
+#list{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:18px 26px 8px}
+#list .rows>.row:last-child{border-bottom:0}
+#list>.empty,#list>.clear{padding-inline:2px}
 .rows{list-style:none;margin:0;padding:0}
 #list>.sec,#hlist .sec{margin-top:6px}
 #list>*+.sec,#list>*+.secbtn,#hlist>*+*{margin-top:30px}
@@ -244,7 +256,7 @@ kbd{font:500 11px var(--f-mono);padding:1px 6px;border-radius:6px;border:1px sol
 .rows.dragging .row.settle{transition:transform .2s cubic-bezier(.2,.8,.2,1),scale .2s;scale:1}
 .rows.dragging .row.lift .grip,.rows.dragging .row.settle .grip{opacity:1}
 .rows.still .row{transition:none}
-@media (max-width:640px){.grip{left:-18px}}
+@media (max-width:880px){.grip{left:-20px}}
 .chk{flex:none;width:26px;height:26px;margin-top:1px;border-radius:50%;border:2px solid var(--c);background:transparent;color:var(--bg);display:grid;place-items:center;padding:0;transition:background .25s,transform .2s}
 .chk:hover{transform:scale(1.1)}
 .chk:active{transform:scale(.9)}
@@ -313,7 +325,9 @@ textarea.edit{font-size:14.5px;resize:vertical;min-height:70px}
 .toast{position:fixed;left:50%;translate:-50% 0;top:calc(16px + env(safe-area-inset-top,0px));z-index:55;display:flex;align-items:center;gap:14px;padding:10px 12px 10px 18px;border-radius:99px;background:var(--fg);color:var(--bg);font-weight:500;font-size:14px;box-shadow:0 14px 36px -12px rgba(0,0,0,.5);animation:pill .35s ease}
 
 @media (max-width:880px){
-  .app{grid-template-columns:minmax(0,1fr)}
+  .app{grid-template-columns:minmax(0,1fr);grid-template-areas:"col" "side" "rail"}
+  .rail{position:static;max-height:none;overflow:visible;padding-right:0}
+  #list{padding:14px 18px 4px}
   .rail{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px 28px;align-items:center}
   .rail>header{grid-column:1}
   .rail>.ringwrap{grid-column:2;justify-self:end;max-width:200px}

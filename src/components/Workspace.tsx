@@ -304,16 +304,6 @@ export function Workspace({ auth }: { auth: Auth }) {
                 onFocus={startFocus}
                 onMove={move}
               />
-              <Goals
-                goals={goals}
-                tasks={tasks}
-                today={today}
-                lanes={lanes}
-                onAdd={addGoal}
-                onUpdate={updateGoal}
-                onReach={reachGoal}
-                onDelete={removeGoal}
-              />
             </div>
           ) : (
             <History
@@ -325,6 +315,19 @@ export function Workspace({ auth }: { auth: Auth }) {
             />
           )}
         </main>
+
+        <aside className="side" aria-label="Goals">
+          <Goals
+            goals={goals}
+            tasks={tasks}
+            today={today}
+            lanes={lanes}
+            onAdd={addGoal}
+            onUpdate={updateGoal}
+            onReach={reachGoal}
+            onDelete={removeGoal}
+          />
+        </aside>
       </div>
 
       {session && (
