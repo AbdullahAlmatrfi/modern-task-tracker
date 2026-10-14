@@ -41,7 +41,9 @@ button{font:inherit;color:inherit;cursor:pointer}
 .boot{min-height:60vh}
 
 .app{max-width:1500px;margin-inline:auto;display:grid;grid-template-columns:288px minmax(0,1fr) 320px;grid-template-areas:"rail col side";gap:clamp(28px,3.5vw,56px);align-items:start}
-.rail{grid-area:rail;position:sticky;top:28px;max-height:calc(100vh - 56px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding-right:6px}
+.rail{grid-area:rail;min-width:0}
+/* only pin the panel when the window is tall enough to show all of it */
+@media (min-height:960px){.rail{position:sticky;top:28px}}
 .col{grid-area:col;width:100%;max-width:760px;margin-inline:auto}
 .side{grid-area:side;position:sticky;top:28px;min-width:0}
 .side .goals{margin-top:0}
@@ -78,7 +80,7 @@ h1{margin:4px 0 0;font:700 clamp(48px,9vw,68px)/.95 var(--f-display);letter-spac
 .ringwrap.complete #ring{animation:glow 1.4s ease-out 1}
 @keyframes glow{0%{filter:drop-shadow(0 0 0 transparent)}35%{filter:drop-shadow(0 0 14px color-mix(in srgb,var(--accent) 70%,transparent))}100%{filter:drop-shadow(0 0 0 transparent)}}
 .ringc{position:absolute;inset:0;display:grid;place-content:center;text-align:center;pointer-events:none}
-.big{font:700 clamp(44px,5vw,60px)/1 var(--f-display);letter-spacing:-.05em;font-variant-numeric:tabular-nums}
+.big{overflow-wrap:anywhere;font:700 48px/1 var(--f-display);letter-spacing:-.05em;font-variant-numeric:tabular-nums}
 .lbl{margin-top:4px;font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .sub{margin:-6px 0 0;color:var(--muted);font-size:15px}
 
@@ -326,7 +328,7 @@ textarea.edit{font-size:14.5px;resize:vertical;min-height:70px}
 
 @media (max-width:880px){
   .app{grid-template-columns:minmax(0,1fr);grid-template-areas:"col" "side" "rail"}
-  .rail{position:static;max-height:none;overflow:visible;padding-right:0}
+  .rail{position:static}
   #list{padding:14px 18px 4px}
   .rail{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px 28px;align-items:center}
   .rail>header{grid-column:1}
@@ -337,7 +339,7 @@ textarea.edit{font-size:14.5px;resize:vertical;min-height:70px}
 @media (max-width:520px){
   .rail{grid-template-columns:minmax(0,1fr)}
   .rail>.ringwrap{grid-column:1;justify-self:start;max-width:240px}
-  .big{font-size:72px}
+  .big{font-size:52px}
   #add{font-size:17px}
   .gtitle{font-size:18px}
   .gcount b{font-size:30px}
