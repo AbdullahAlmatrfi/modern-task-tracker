@@ -19,16 +19,25 @@ export function sortActive(tasks: Task[]): Task[] {
 }
 
 /**
- * What belongs on the list for `day`. Today also shows every unfinished task left over
- * from earlier days, so nothing slips away: it stays until it is checked or deleted.
- * A leftover task you finish today stays in today's Done list.
+ * Was the task finished by the end of `day`? A day's record is frozen: a task you finish
+ * on Wednesday does not turn Tuesday's ring green.
  */
-export function visibleOn(tasks: Task[], day: DayKey, today: DayKey): Task[] {
-  return tasks.filter((t) => {
-    if (t.day === day) return true;
-    if (day !== today || t.day > today) return false;
-    return !t.done || (t.doneAt !== null && toKey(new Date(t.doneAt)) === today);
-  });
+export function doneBy(t: Task, day: DayKey): boolean {
+  if (!t.done) return false;
+  if (t.doneAt === null) return true;
+  return toKey(new Date(t.doneAt)) <= day;
+}
+
+/** The tasks planned for `day`, with `done` as it stood at the end of that day. */
+export function plannedOn(tasks: Task[], day: DayKey): Task[] {
+  return tasks
+    .filter((t) => t.day === day)
+    .map((t) => (doneBy(t, day) === t.done ? t : { ...t, done: !t.done }));
+}
+
+/** Unfinished tasks planned for an earlier day. They wait until they are ticked or deleted. */
+export function leftOver(tasks: Task[], today: DayKey): Task[] {
+  return tasks.filter((t) => !t.done && t.day < today);
 }
 
 /** Days in a row (ending today, or yesterday if today isn't finished) where every task was done. */
@@ -36,7 +45,8 @@ export function streak(byDay: Record<DayKey, Task[]>, today: DayKey): number {
   let n = 0;
   for (let i = 0; i < 400; i++) {
     const list = byDay[addDays(today, -i)] ?? [];
-    const full = list.length > 0 && list.every((t) => t.done);
+    const day = addDays(today, -i);
+    const full = list.length > 0 && list.every((t) => doneBy(t, day));
     if (full) n++;
     else if (i === 0) continue;
     else break;

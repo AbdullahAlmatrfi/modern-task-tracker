@@ -1,5 +1,6 @@
 import type { DayKey, Task, WeekStart } from '../types';
 import { diffDays, fromKey, weekDays, weekStartOf } from '../lib/dates';
+import { doneBy } from '../lib/stats';
 import { ChevronIcon } from './icons';
 
 interface Props {
@@ -37,7 +38,7 @@ export function Week({ anchor, selected, today, weekStart, byDay, onSelect, onSh
       <nav className="week" aria-label="Pick a day">
         {days.map((k) => {
           const list = byDay[k] ?? [];
-          const done = list.filter((t) => t.done).length;
+          const done = list.filter((t) => doneBy(t, k)).length;
           const frac = list.length ? done / list.length : 0;
           const d = fromKey(k);
           return (

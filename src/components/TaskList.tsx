@@ -11,6 +11,8 @@ import { ChevronIcon } from './icons';
 interface Props {
   day: DayKey;
   tasks: Task[];
+  /** Unfinished tasks from earlier days, shown above today's tasks. */
+  carried?: Task[];
   now: number;
   newId: string | null;
   onToggle: (task: Task, row: HTMLElement, button: HTMLElement) => void;
@@ -30,7 +32,7 @@ interface Drag {
 
 const SETTLE_MS = 200;
 
-export function TaskList({ day, tasks, now, newId, onToggle, onSave, onDelete, onFocus, onMove }: Props) {
+export function TaskList({ day, tasks, carried = [], now, newId, onToggle, onSave, onDelete, onFocus, onMove }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const [drag, setDrag] = useState<Drag | null>(null);
   const [still, setStill] = useState(false);
@@ -39,6 +41,7 @@ export function TaskList({ day, tasks, now, newId, onToggle, onSave, onDelete, o
   const gesture = useRef<{ startY: number; heights: number[]; mids: number[]; timer?: number } | null>(null);
 
   const active = useMemo(() => sortManual(tasks.filter((t) => !settled[t.id])), [tasks, settled]);
+  const carriedSorted = useMemo(() => sortManual(carried), [carried]);
   const done = useMemo(
     () => tasks.filter((t) => settled[t.id]).sort((a, b) => (b.doneAt ?? 0) - (a.doneAt ?? 0)),
     [tasks, settled],
@@ -150,19 +153,35 @@ export function TaskList({ day, tasks, now, newId, onToggle, onSave, onDelete, o
     />
   );
 
+  const empty = (
+    <div className="empty">
+      <div className="etitle">Nothing planned for {fromKey(day).toLocaleDateString(undefined, { weekday: 'long' })}</div>
+      <p>Type a task above. Add a time like 14:30, a #lane, or ! to mark it high priority.</p>
+    </div>
+  );
+
+  const carriedBlock =
+    carriedSorted.length > 0 ? (
+      <>
+        <h2 className="sec">
+          Carried over <span className="cnt">{carriedSorted.filter((t) => !t.done).length}</span>
+        </h2>
+        <ul className="rows">{carriedSorted.map((t) => row(t))}</ul>
+      </>
+    ) : null;
+
   if (tasks.length === 0) {
     return (
       <div id="list">
-        <div className="empty">
-          <div className="etitle">Nothing planned for {fromKey(day).toLocaleDateString(undefined, { weekday: 'long' })}</div>
-          <p>Type a task above. Add a time like 14:30, a #lane, or ! to mark it high priority.</p>
-        </div>
+        {carriedBlock}
+        {empty}
       </div>
     );
   }
 
   return (
     <div id="list">
+      {carriedBlock}
       {active.length > 0 ? (
         <>
           <h2 className="sec">

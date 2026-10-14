@@ -8,7 +8,7 @@ import { addDays, todayKey, weekStartOf } from '../lib/dates';
 import { createTask } from '../lib/task';
 import { topLanes } from '../lib/lanes';
 import { burst } from '../lib/confetti';
-import { groupByDay, sortActive, streak, visibleOn } from '../lib/stats';
+import { groupByDay, leftOver, plannedOn, sortActive, streak } from '../lib/stats';
 import { createGoal } from '../lib/goals';
 import { useNow } from '../hooks/useNow';
 import { usePrefs } from '../hooks/usePrefs';
@@ -101,7 +101,15 @@ export function Workspace({ auth }: { auth: Auth }) {
   const tasks = useMemo(() => Object.values(data.tasks), [data.tasks]);
   const goals = useMemo(() => Object.values(data.goals), [data.goals]);
   const byDay = useMemo(() => groupByDay(tasks), [tasks]);
-  const dayTasks = useMemo(() => visibleOn(tasks, sel, today), [tasks, sel, today]);
+  const dayTasks = byDay[sel] ?? [];
+  // the ring and the week strip show each day as it stood when that day ended
+  const ringTasks = useMemo(() => plannedOn(tasks, sel), [tasks, sel]);
+  // unfinished tasks from earlier days wait here; a ticked one lingers a moment so you see it tick
+  const [lingering, setLingering] = useState<string[]>([]);
+  const carried = useMemo(
+    () => (sel === today ? [...leftOver(tasks, today), ...tasks.filter((t) => t.done && lingering.includes(t.id))] : []),
+    [tasks, sel, today, lingering],
+  );
   const lanes = useMemo(() => topLanes(tasks), [tasks]);
   const doneCount = useMemo(() => tasks.filter((t) => t.done).length, [tasks]);
   const streakNow = streak(byDay, today);
@@ -118,13 +126,17 @@ export function Workspace({ auth }: { auth: Auth }) {
   const toggle = useCallback(
     (task: Task, row: HTMLElement, button: HTMLElement) => {
       dispatch({ type: 'toggle', id: task.id, at: Date.now() });
+      if (!task.done && task.day < today) {
+        setLingering((l) => [...l, task.id]);
+        window.setTimeout(() => setLingering((l) => l.filter((x) => x !== task.id)), 1000);
+      }
       if (!task.done) {
         const r = button.getBoundingClientRect();
         burst(r.left + r.width / 2, r.top + r.height / 2, getComputedStyle(row).getPropertyValue('--c').trim() || '#888');
         setSession((s) => (s?.taskId === task.id ? null : s));
       }
     },
-    [],
+    [today],
   );
 
   const save = useCallback((id: string, patch: TaskPatch) => {
@@ -211,9 +223,9 @@ export function Workspace({ auth }: { auth: Auth }) {
     [show],
   );
 
-  const active = dayTasks.filter((t) => !t.done);
+  const active = ringTasks.filter((t) => !t.done);
   const next = sortActive(active).find((t) => t.time);
-  const sub = !dayTasks.length
+  const sub = !ringTasks.length
     ? 'A clean slate.'
     : !active.length
       ? 'Everything is done.'
@@ -233,7 +245,7 @@ export function Workspace({ auth }: { auth: Auth }) {
               setAnchor(today);
             }}
           />
-          <Ring tasks={dayTasks} />
+          <Ring tasks={ringTasks} />
           <p className="sub">{sub}</p>
           <Week
             anchor={anchor}
@@ -247,7 +259,7 @@ export function Workspace({ auth }: { auth: Auth }) {
             }}
             onShift={(n) => setAnchor((a) => addDays(a, n))}
           />
-          <Lanes tasks={dayTasks} />
+          <Lanes tasks={ringTasks} />
           <section>
             <h2 className="sec">Focus timer</h2>
             <div className="seg" role="group" aria-label="Focus length in minutes">
@@ -296,6 +308,7 @@ export function Workspace({ auth }: { auth: Auth }) {
               <TaskList
                 day={sel}
                 tasks={dayTasks}
+                carried={carried}
                 now={now}
                 newId={newId}
                 onToggle={toggle}

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { addDays, diffDays, weekDays, weekStartOf } from './dates';
 import { parseQuickAdd } from './parse';
-import { carryOver, completed, groupByDay, lastNDaysCounts, sortActive, streak, timeInfo, visibleOn } from './stats';
+import { carryOver, completed, groupByDay, lastNDaysCounts, sortActive, streak, timeInfo, doneBy, leftOver, plannedOn } from './stats';
 import { positionAt, sortManual } from './order';
 import { createTask } from './task';
 import type { Task } from '../types';
@@ -129,26 +129,34 @@ describe('manual order', () => {
   });
 });
 
-describe('visibleOn', () => {
-  const today = '2026-10-13';
+describe('days stay frozen', () => {
+  const today = '2026-10-14';
+  const at = (d: number, h = 9) => new Date(2026, 9, d, h).getTime();
   const mk2 = (day: string, extra: Partial<Task> = {}): Task => ({ ...createTask(day, { title: day }, 1), ...extra });
 
-  it('keeps unfinished tasks from any earlier day on today, however old', () => {
+  it('a task finished the next day does not count as done on its own day', () => {
+    const t = mk2('2026-10-13', { done: true, doneAt: at(14) });
+    expect(doneBy(t, '2026-10-13')).toBe(false);
+    expect(doneBy(t, '2026-10-14')).toBe(true);
+    expect(plannedOn([t], '2026-10-13')[0].done).toBe(false);
+  });
+
+  it('plannedOn only returns that day, so a leftover never touches today', () => {
+    const old = mk2('2026-10-13');
+    const now = mk2(today);
+    expect(plannedOn([old, now], today)).toEqual([now]);
+  });
+
+  it('leftOver keeps unfinished tasks from any earlier day, however old, but not finished ones', () => {
     const old = mk2('2026-08-01');
+    const finished = mk2('2026-10-01', { done: true, doneAt: at(2) });
     const todayTask = mk2(today);
-    const future = mk2('2026-10-20');
-    expect(visibleOn([old, todayTask, future], today, today)).toEqual([old, todayTask]);
+    expect(leftOver([old, finished, todayTask], today)).toEqual([old]);
   });
 
-  it('keeps a leftover task you finished today, but not one finished earlier', () => {
-    const doneToday = mk2('2026-10-01', { done: true, doneAt: new Date(2026, 9, 13, 9).getTime() });
-    const doneBefore = mk2('2026-10-01', { done: true, doneAt: new Date(2026, 9, 5, 9).getTime() });
-    expect(visibleOn([doneToday, doneBefore], today, today)).toEqual([doneToday]);
-  });
-
-  it('does not roll tasks onto other days', () => {
-    const old = mk2('2026-10-01');
-    expect(visibleOn([old], '2026-10-05', today)).toEqual([]);
-    expect(visibleOn([old], '2026-10-01', today)).toEqual([old]);
+  it('the streak does not count a day whose task was finished later', () => {
+    const late = mk2('2026-10-13', { done: true, doneAt: at(14) });
+    const ok = mk2(today, { done: true, doneAt: at(14) });
+    expect(streak(groupByDay([late, ok]), today)).toBe(1);
   });
 });
